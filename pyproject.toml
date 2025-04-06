@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "ejercicio-rpa-pablo"
+version = "0.1.0"
+description = ""
+authors = ["PabloAfonsoYanes <alu0101326467@ull.edu.es>"]
+readme = "README.md"
+package-mode = false
+
+[tool.poetry.dependencies]
+python = ">=3.9, <3.12"
+pyautogui = "^0.9.54"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
