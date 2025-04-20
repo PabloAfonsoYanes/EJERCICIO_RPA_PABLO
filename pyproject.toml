@@ -12,6 +12,7 @@ pyautogui = "^0.9.54"
 selenium = "^4.31.0"
 beautifulsoup4 = "^4.13.3"
 requests = "^2.32.3"
+pandas = "^2.2.3"
 
 
 [build-system]
