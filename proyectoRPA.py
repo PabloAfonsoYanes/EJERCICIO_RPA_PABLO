@@ -44,26 +44,6 @@ TIENDAS = [
 ]
 
 
-def open_browser_gui():
-    """
-    Abre Google Chrome sin navegar a ninguna URL.
-    """
-    if sys.platform == "darwin":
-        pyautogui.keyDown('command')
-        pyautogui.press('space')
-        pyautogui.keyUp('command')
-        time.sleep(1)
-        pyautogui.write('Google Chrome', interval=0.1)
-        pyautogui.press('enter')
-        time.sleep(5)
-    else:
-        pyautogui.hotkey('win', 'r')
-        time.sleep(1)
-        pyautogui.write('chrome', interval=0.1)
-        pyautogui.press('enter')
-        time.sleep(5)
-
-
 def buscar_precios_air_force_1():
     """
     Para cada tienda, abre la URL, busca "Air Force 1" y devuelve una lista de alertas.
@@ -110,7 +90,7 @@ def buscar_precios_air_force_1():
 
 def enviar_email_alertas(alertas):
     """
-    Automáticamente abre Mail (macOS) o Outlook (Windows), compone y envía un email con alertas,
+    Abre Mail.app (macOS) o Outlook (Windows), compone y envía un email con alertas,
     cierra la aplicación y muestra confirmación.
     """
     # Guardar histórico en CSV
@@ -121,57 +101,64 @@ def enviar_email_alertas(alertas):
         else:
             df.to_csv(HISTORY_CSV, mode='a', header=False, index=False)
 
-    # Atajos según SO
-    if sys.platform == "darwin":
-        open_cmd = ('command','space')
-        app_name = 'Mail'
-        new_mail = ('command','n')
-        send_mail = ('command','shift','d')
-        close_app = ('command','q')
-        paste_key = ('command','v')
+    # Configuración de atajos según SO
+    if sys.platform == 'darwin':
+        open_cmd    = ['command', 'space']
+        app_name    = 'Mail'
+        new_mail    = ['command', 'n']
+        paste_key   = ['command', 'v']
+        send_mail   = ['command', 'shift', 'd']  # two modifiers, then key
+        close_app   = ['command', 'q']
     else:
-        open_cmd = ('win','r')
-        app_name = 'outlook'
-        new_mail = ('ctrl','n')
-        send_mail = ('alt','s')
-        close_app = ('alt','f4')
-        paste_key = ('ctrl','v')
+        open_cmd    = ['win', 'r']
+        app_name    = 'outlook'
+        new_mail    = ['ctrl', 'n']
+        paste_key   = ['ctrl', 'v']
+        send_mail   = ['alt', 's']
+        close_app   = ['alt', 'f4']
 
-    # Abrir cliente
-    pyautogui.hotkey(*open_cmd)
-    time.sleep(1)
+    def press_combo(combo):
+        # Combo is list: [mod1, mod2, ..., key]
+        *mods, key = combo
+        for m in mods:
+            pyautogui.keyDown(m)
+        pyautogui.press(key)
+        for m in reversed(mods):
+            pyautogui.keyUp(m)
+        time.sleep(0.5)
+
+    # Abrir cliente de correo
+    press_combo(open_cmd)
     pyautogui.write(app_name, interval=0.1)
     pyautogui.press('enter')
     time.sleep(5)
 
     # Nuevo mensaje
-    pyautogui.hotkey(*new_mail)
-    time.sleep(1)
+    press_combo(new_mail)
 
-    # Para:
+    # Campo Para: pegar destinatarios
     pyperclip.copy(','.join(EMAIL_RECIPIENTS))
-    pyautogui.hotkey(*paste_key)
+    press_combo(paste_key)
 
-    # Asunto (tab x3 ∶ Para→Cc→Cco→Asunto)
+    # Asunto: saltar a Asunto y pegar
     pyautogui.press('tab', presses=3, interval=0.1)
     pyperclip.copy('Alerta: precios bajos Air Force 1')
-    pyautogui.hotkey(*paste_key)
+    press_combo(paste_key)
 
-    # Cuerpo (tab)
+    # Cuerpo: saltar y pegar contenido
     pyautogui.press('tab')
-    lines = [f"- {a['store']}: {a['price']} < {a['threshold']} → {a['url']}" for a in alertas]
-    body = 'Se han detectado precios bajos en:\n' + '\n'.join(lines)
+    body_lines = [f"- {a['store']}: {a['price']} < {a['threshold']} → {a['url']}" for a in alertas]
+    body = 'Se han detectado precios bajos en:\n' + '\n'.join(body_lines)
     pyperclip.copy(body)
-    pyautogui.hotkey(*paste_key)
-    time.sleep(1)
+    press_combo(paste_key)
 
-    # Enviar y cerrar
-    pyautogui.hotkey(*send_mail)
-    time.sleep(1)
-    pyautogui.hotkey(*close_app)
-    time.sleep(1)
+    # Enviar correo
+    press_combo(send_mail)
 
-    # Confirmación
+    # Cerrar la aplicación de correo
+    press_combo(close_app)
+
+    # Confirmación final
     pyautogui.alert(text='Correo con alertas enviado.', title='Éxito')
 
 
@@ -186,13 +173,11 @@ def proceso_monitor():
 def main():
     try:
         while True:
-            #open_browser_gui()
             proceso_monitor()
             print('Esperando 1 hora...')
             time.sleep(3600)
     except KeyboardInterrupt:
         print('Monitor detenido por usuario.')
-
 
 if __name__ == '__main__':
     main()
